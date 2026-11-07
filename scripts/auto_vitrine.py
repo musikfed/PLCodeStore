@@ -143,7 +143,7 @@ def inferred(repo,gh,owner):
       "description":(repo.get("description") or profile["description"] or "Назначение проекта уточняется автором.")[:350],
       "subtitle":profile["subtitle"],
       "tags":[repo.get("language") or "Git"],"visibility":"private" if private else "public",
-      "publication":"review_required","public_private_approved":False,
+      "publication":"publish_on_merge" if not private else "review_required","public_private_approved":False,
       "display_mode":mode,"status":status,"repo_url":None if private else repo.get("html_url"),
       "screenshots":shots,"cover":"vitrine/generated/cover.svg","cover_type":"schematic-not-screenshot"}
 
@@ -169,7 +169,8 @@ def propose(gh,owner,repo,meta):
         "head":PROPOSAL_BRANCH,"base":repo.get("default_branch","main"),
         "body":"Automated proposal. No application code was changed. Review metadata and visual. "
                "Private projects: only an explicitly approved public cover and version may be shown. "
-               "Edit publication before final display."})
+               "Public projects: Merge this PR to grant publication consent without editing JSON. "
+               "Private projects still require explicit private metadata permission."})
     return "PR opened"
 
 def scan(gh, owner, state_path, drafts, max_repos=60, max_prs=6,
