@@ -1,0 +1,7 @@
+{
+  "studio": {"host": "127.0.0.1", "port": 8077},
+  "providers": [
+    {"type": "github", "api_url": "https://api.github.com", "owner": "musikfed", "token_env": "GITHUB_TOKEN", "include_private": false}
+  ],
+  "publication": {"base_url": "https://example.org/", "theme": "default"}
+}
