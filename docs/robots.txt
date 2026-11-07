@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://musikfed.github.io/PLCodeStore/sitemap.xml
