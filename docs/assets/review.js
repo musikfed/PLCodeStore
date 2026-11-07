@@ -26,7 +26,7 @@ function decisionUrl(item,action,note){
  // No access token or write credentials are ever embedded in static Pages.
  const url=new URL('https://github.com/musikfed/PLCodeStore/issues/new');
  url.searchParams.set('title','PLCS REVIEW '+action+' '+item.repository+'#'+item.number);
- url.searchParams.set('body','Revision: '+item.revision+'\\nChecks: '+(action==='APPROVE'?'3/3':'not required')+'\\n\\nЗамечания (необязательно):\\n'+(note||''));
+ url.searchParams.set('body','Revision: '+item.revision+'\nChecks: '+(action==='APPROVE'?'3/3':'not required')+'\n\nЗамечания (необязательно):\n'+(note||''));
  return url.toString();
 }
 function openReal(item,url,feedback){
