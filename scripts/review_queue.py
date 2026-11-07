@@ -101,6 +101,7 @@ def review_items(gh, owner, repos, max_repos=65):
                 "image":real_image,"images":real_images[:4],"image_caption":image_caption,
                 "status":str(meta.get("status") or "Ожидает решения")[:100],
                 "publication":meta.get("publication"),
+                "publish_on_merge":meta.get("publication") in ("approved","publish_on_merge"),
             })
     return sorted(found,key=lambda r:(r["repository"].lower(),r["number"]))
 
