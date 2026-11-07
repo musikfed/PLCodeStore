@@ -57,3 +57,31 @@ def test_requires_author_pr_source_same_repo():
                          "sha":"a"*40,"repo":{"full_name":"attacker/visible"}}}]
             return super().api(method,path,missing_ok)
     assert review_items(Forged(),"musikfed",[repository("visible")])==[]
+
+
+def test_show_existing_repo_artwork_not_generated_cover():
+    from scripts.review_queue import public_original_image
+    source="https://raw.githubusercontent.com/musikfed/achewiw/main/docs/media/achewiw-home.svg"
+    assert public_original_image([source],"musikfed","achewiw","main")==source
+    assert public_original_image([source],"musikfed","other-project","main") is None
+    assert public_original_image(["https://example.com/screen.png"],"musikfed","achewiw","main") is None
+    assert public_original_image(["https://raw.githubusercontent.com/musikfed/achewiw/main/../../secret.svg"],
+                                 "musikfed","achewiw","main") is None
+
+def test_review_queue_includes_verified_original_images():
+    source="https://raw.githubusercontent.com/musikfed/visible/main/docs/media/visible-home.svg"
+    class RealSources(FakeGit):
+        def api(self,method,path,missing_ok=False):
+            if "/contents/vitrine/meta.json" in path:
+                self.used+=1
+                meta={"id":"visible","visibility":"public","publication":"review_required",
+                      "title":"Visible UI","description":"Real source project","version":"—",
+                      "screenshots":[source,"https://example.com/tracker.svg"],"tags":["Python"]}
+                return {"encoding":"base64",
+                        "content":base64.b64encode(json.dumps(meta).encode()).decode()}
+            return super().api(method,path,missing_ok)
+    records=review_items(RealSources(),"musikfed",[repository("visible")])
+    assert len(records)==1
+    assert records[0]["image"]==source
+    assert records[0]["images"]==[source]
+    assert records[0]["image_caption"]=="Векторный макет из исходного репозитория"

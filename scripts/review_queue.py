@@ -8,11 +8,40 @@ import base64
 import json
 import re
 import urllib.parse
+from urllib.parse import urlsplit, unquote, quote
 from pathlib import Path
 from scripts.vitrine_cover import cover
 
 ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 BRANCH = "plcodestore/vitrine-proposal"
+
+
+VALID_MEDIA_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".svg")
+MEDIA_ROOTS = ("docs/media/", "docs/screenshots/", "docs/showcase/",
+               "screenshots/", "images/", "static/", "assets/", "vitrine/screenshots/")
+
+def public_original_image(screenshots, owner, repo, branch):
+    """Choose real existing-repo media, never link a private or third-party host."""
+    if not isinstance(screenshots, list):
+        return None
+    expected = f"/{owner}/{repo}/{quote(branch, safe='')}/"
+    for item in screenshots[:20]:
+        if not isinstance(item, str):
+            continue
+        parsed = urlsplit(item)
+        if parsed.scheme != "https" or parsed.hostname != "raw.githubusercontent.com":
+            continue
+        if parsed.query or parsed.fragment or parsed.username or parsed.password:
+            continue
+        if not parsed.path.startswith(expected):
+            continue
+        asset_path = unquote(parsed.path[len(expected):])
+        if (".." in asset_path.split("/") or not asset_path.startswith(MEDIA_ROOTS)
+            or not asset_path.lower().endswith(VALID_MEDIA_SUFFIXES)):
+            continue
+        # Prefer the exact first verified source path; avoid inheriting external URLs.
+        return "https://raw.githubusercontent.com" + parsed.path
+    return None
 
 def review_items(gh, owner, repos, max_repos=65):
     found = []
@@ -53,6 +82,15 @@ def review_items(gh, owner, repos, max_repos=65):
             desc=str(meta.get("description") or "")[:600]
             version=str(meta.get("version") or "—")[:65]
             tags=[str(x)[:35] for x in meta.get("tags",[])[:12] if isinstance(x,str)]
+            real_images=[]
+            for asset in meta.get("screenshots",[])[:8] if isinstance(meta.get("screenshots"),list) else []:
+                validated=public_original_image([asset],owner,name,repo.get("default_branch","main"))
+                if validated and validated not in real_images:real_images.append(validated)
+            real_image=real_images[0] if real_images else None
+            image_caption=("Векторный макет из исходного репозитория"
+                           if real_image and real_image.lower().endswith(".svg")
+                           else "Изображение из исходного репозитория"
+                           if real_image else "Сгенерированная графическая обложка")
             number=pr["number"]
             pr_url=f"https://github.com/{owner}/{name}/pull/{number}"
             edit_url=f"https://github.com/{owner}/{name}/edit/{BRANCH}/vitrine/meta.json"
@@ -60,7 +98,8 @@ def review_items(gh, owner, repos, max_repos=65):
                 "id":name,"repository":f"{owner}/{name}","number":number,
                 "revision":head,"title":title,"description":desc,"version":version,
                 "tags":tags,"pr_url":pr_url,"edit_url":edit_url,
-                "image":None,"status":str(meta.get("status") or "Ожидает решения")[:100],
+                "image":real_image,"images":real_images[:4],"image_caption":image_caption,
+                "status":str(meta.get("status") or "Ожидает решения")[:100],
             })
     return sorted(found,key=lambda r:(r["repository"].lower(),r["number"]))
 

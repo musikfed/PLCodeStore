@@ -39,11 +39,17 @@ function render(){
  // All values written to HTML are escaped; links are checked again below.
  const img=item.image||('../assets/covers/review-'+encodeURIComponent(item.id)+'.svg');
  const photo=/^(https:\/\/raw\.githubusercontent\.com\/musikfed\/|..\/assets\/covers\/review-)/.test(img)?img:'../assets/icon.svg';
+ const verifiedImages=(Array.isArray(item.images)?item.images:[])
+  .filter(url=>typeof url==='string'&&/^https:\/\/raw\.githubusercontent\.com\/musikfed\/[A-Za-z0-9._-]+\//.test(url)).slice(0,4);
+ const thumbHtml=verifiedImages.length>1
+  ?'<div class="review-thumbnails" aria-label="Реальные материалы проекта">'+
+   verifiedImages.map((url,i)=>'<button type="button" class="review-thumb" data-image-index="'+i+'" aria-label="Изображение '+(i+1)+' из '+verifiedImages.length+'"><img loading="lazy" alt="" src="'+safe(url)+'"></button>').join('')+
+   '</div>':'';
  outer.innerHTML='<div class="review-card-top"><span>PROPOSAL / '+safe(item.id)+'</span><span>'+String(selected+1).padStart(2,'0')+' / '+String(available.length).padStart(2,'0')+'</span></div>'+
   '<h2 class="review-card-title">'+safe(item.title)+'</h2>'+
   '<p class="review-card-description">'+safe(item.description)+'</p>'+
-  '<div class="review-tags"><span>v'+safe(item.version)+'</span>'+item.tags.map(t=>'<span>'+safe(t)+'</span>').join('')+'</div>'+
-  '<figure class="review-art"><img loading="lazy" src="'+safe(photo)+'" alt="Материалы проекта '+safe(item.title)+'"><figcaption>'+ (item.image?'Проверенный скриншот из исходного репозитория':'Сгенерированная дизайнерская обложка — не скриншот программы')+'</figcaption></figure>'+
+  '<div class="review-tags"><span>'+safe(item.version && !['0.0.0','—','unknown'].includes(item.version) ? 'v'+item.version : 'Версия не указана')+'</span>'+item.tags.map(t=>'<span>'+safe(t)+'</span>').join('')+'</div>'+
+  '<figure class="review-art"><img loading="lazy" src="'+safe(photo)+'" alt="Материалы проекта '+safe(item.title)+'"><figcaption>'+safe(item.image_caption||'Сгенерированная графическая обложка — не скриншот программы')+'</figcaption></figure>'+thumbHtml+
   '<div class="review-card-links"><a id="review-git-pr" target="_blank" rel="noopener noreferrer">Открыть PR в GitHub ↗</a><a id="review-git-edit" target="_blank" rel="noopener noreferrer">Редактировать meta.json ↗</a></div>'+
   '<div class="checks-title">СЕМЬ КРИТЕРИЕВ ПЕРЕД ПУБЛИКАЦИЕЙ</div>'+
   '<div class="review-checks">'+checks.map(([k,label])=>'<label><input type="checkbox" data-check="'+safe(k)+'" '+(checked.includes(k)?'checked':'')+'> '+safe(label)+'</label>').join('')+'</div>'+
@@ -52,6 +58,20 @@ function render(){
   '<p class="review-message" id="review-message" role="status"></p>'+
   '<div class="review-pagination"><button id="review-previous" type="button">← Предыдущая</button><span class="review-break">Решение сохранит только GitHub</span><button id="review-next" type="button">Следующая →</button></div>';
  card.appendChild(outer);
+ if(verifiedImages.length>1){
+  const mainPhoto=card.querySelector('.review-art img');
+  const figCaption=card.querySelector('.review-art figcaption');
+  card.querySelectorAll('.review-thumb').forEach((button,i)=>{
+   button.addEventListener('click',()=>{
+    mainPhoto.src=verifiedImages[i];
+    figCaption.textContent=verifiedImages[i].toLowerCase().endsWith('.svg')
+      ?'Векторный макет из исходного репозитория'
+      :'Изображение из исходного репозитория';
+    card.querySelectorAll('.review-thumb').forEach((node,j)=>node.classList.toggle('is-active',j===i));
+   });
+   button.classList.toggle('is-active',i===0);
+  });
+ }
  const pr=card.querySelector('#review-git-pr'),edit=card.querySelector('#review-git-edit');
  pr.href=targetOf(item,'pr')||'#';edit.href=targetOf(item,'edit')||'#';
  const boxes=Array.from(card.querySelectorAll('input[type=checkbox]'));

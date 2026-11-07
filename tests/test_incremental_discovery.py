@@ -60,3 +60,23 @@ def test_manual_full_scan_rechecks_everything(tmp_path):
     forced = scan(gh, "musikfed", state, tmp_path/"drafts",
                   max_repos=60, full_scan=True)
     assert forced["inspected"] == 8
+
+
+def test_readme_metadata_does_not_fabricate_version():
+    from scripts.auto_vitrine import readme_profile, version
+    class ReadMe:
+        def file(self,owner,name,path):
+            if path=="README.md":
+                return """# ACHEWIW — Типография в кармане
+
+> Слово чтимое.
+
+**ACHEWIW (StoryEngine)** — локальная издательская студия для автора: от идеи и плана до редакторской проверки, иллюстраций и книги в PDF, DOCX и EPUB.
+"""
+            return None
+    source=ReadMe()
+    profile=readme_profile(source,"musikfed","achewiw")
+    assert profile["title"]=="ACHEWIW"
+    assert profile["subtitle"]=="Типография в кармане"
+    assert "локальная издательская студия" in profile["description"]
+    assert version({"name":"achewiw"},source,"musikfed")=="—"
