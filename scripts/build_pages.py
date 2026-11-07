@@ -59,13 +59,16 @@ def approved_record(repo: dict, raw: dict):
             "description":description,"tagline":description[:150],"tags":tags,
             "kind":tags[0] if tags else "Software","created_at":str(repo.get("created_at") or ""),
             "visibility":"private" if private else "public","display_mode":mode,
-            "image":None,"repo_url":None if private else repo.get("html_url")}
+            "image":None,"images":[],"repo_url":None if private else repo.get("html_url")}
     if not private:
-        for item in raw.get("screenshots",[])[:8]:
+        shots=raw.get("screenshots",[])
+        if not isinstance(shots,list):shots=[]
+        for item in shots[:8]:
             img=allowed_picture(item,repo["owner"]["login"],repo["name"],repo.get("default_branch","main"))
-            if img:
-                record["image"]=img
-                break
+            if img and img not in record["images"]:
+                record["images"].append(img)
+        if record["images"]:
+            record["image"]=record["images"][0]
     return record
 
 def collect(gh: Git, owner: str, max_repos: int = 120, repositories=None):
@@ -111,6 +114,7 @@ def details_html(p):
       '<body><header><a class="back" href="../../">← PL CODE STORE</a><span>PRODUCT VITRINE / '+pid+'</span></header>'
       '<main><div class="eyebrow">PRESENTATION · '+h(p["kind"])+'</div><h1>'+h(p["title"])+'</h1>'
       '<p class="intro">'+h(p["description"])+'</p><div class="scene">'+image_markup(p,"../../")+'</div>'
+      '<div class="project-screens">'+''.join('<figure><img loading="lazy" decoding="async" src="'+h(img)+'" alt="Изображение проекта '+h(p["title"])+'"><figcaption>Материал из vitrine/ проекта</figcaption></figure>' for img in p.get("images",[])[1:6])+'</div>'
       '<div class="metadata"><div><small>ВЕРСИЯ</small><p>'+h(p["version"])+'</p></div>'
       '<div><small>СТАТУС</small><p>'+h(p["status"])+'</p></div>'
       '<div><small>ТИП</small><p>'+("Закрытый код" if p["visibility"]=="private" else "Открытый код")+'</p></div></div>'
