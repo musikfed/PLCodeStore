@@ -54,8 +54,10 @@
       "enum": [
         "disabled",
         "review_required",
-        "approved"
-      ]
+        "approved",
+        "publish_on_merge"
+      ],
+      "description": "publish_on_merge: the author explicitly consents by merging the proposed vitrine PR. It is not published while the PR is open."
     },
     "repo_url": {
       "type": [

@@ -40,7 +40,7 @@ def allowed_picture(value, owner, repo, branch):
 
 def approved_record(repo: dict, raw: dict):
     """Allowlist what GitHub Pages may receive from one approved source."""
-    if not isinstance(raw,dict) or raw.get("publication")!="approved":return None
+    if not isinstance(raw,dict) or raw.get("publication") not in ("approved", "publish_on_merge"):return None
     if raw.get("visibility")=="internal":return None
     if raw.get("id")!=repo.get("name") or not ID_RE.fullmatch(str(raw.get("id",""))):
         return None
@@ -49,6 +49,9 @@ def approved_record(repo: dict, raw: dict):
     title=str(raw.get("title") or repo["name"])[:180]
     version=str(raw.get("version") or "—")[:65]
     status=str(raw.get("status") or ("В разработке" if repo.get("size",0)==0 else "Продукт"))[:150]
+    # A merged proposal is no longer waiting for the author's review.
+    if status=="Черновик — ожидает проверки":status="В разработке"
+    elif status=="Активная разработка · ожидает решения автора":status="Активная разработка"
     description=str(raw.get("description") or "")[:1000]
     mode=str(raw.get("display_mode") or ("development" if repo.get("size",0)==0 else "diagram"))
     tags=[str(x)[:60] for x in raw.get("tags",[])[:12] if isinstance(x,str)]
@@ -65,9 +68,9 @@ def approved_record(repo: dict, raw: dict):
                 break
     return record
 
-def collect(gh: Git, owner: str, max_repos: int = 120):
+def collect(gh: Git, owner: str, max_repos: int = 120, repositories=None):
     accepted=[]
-    repositories=gh.repos(owner)
+    repositories=repositories if repositories is not None else gh.repos(owner)
     for repo in repositories[:max_repos]:
         if gh.used+2>=gh.budget:break
         rawtext=gh.file(owner,repo["name"],"vitrine/meta.json")
@@ -165,10 +168,11 @@ def main():
     args=parser.parse_args()
     token=os.getenv("PL_CODESTORE_TOKEN") or os.getenv("GITHUB_TOKEN")
     gh=Git(token,budget=args.budget)
-    items=collect(gh,args.owner,args.max_repos)
+    repos=gh.repos(args.owner)
+    items=collect(gh,args.owner,args.max_repos,repositories=repos)
     # Public review queue comes from genuine open source-repo PRs,
     # never from the mockup and never from private repositories.
-    pending=review_items(gh,args.owner,gh.repos(args.owner),args.max_repos)
+    pending=review_items(gh,args.owner,repos,args.max_repos)
     build(items,args.out,review=pending)
     print("Published",len(items),"approved products; review queue",len(pending))
 if __name__=="__main__":main()

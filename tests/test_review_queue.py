@@ -85,3 +85,43 @@ def test_review_queue_includes_verified_original_images():
     assert records[0]["image"]==source
     assert records[0]["images"]==[source]
     assert records[0]["image_caption"]=="Векторный макет из исходного репозитория"
+
+
+def test_publication_consent_is_merge_of_source_pr_only():
+    from scripts.build_pages import approved_record
+    repo={"name":"visible","private":False,"size":24,"html_url":"https://github.com/musikfed/visible",
+          "default_branch":"main","owner":{"login":"musikfed"}}
+    meta={"id":"visible","title":"Visible","version":"1.0","description":"Source-driven UI",
+          "tags":["Python"],"visibility":"public","publication":"review_required"}
+    assert approved_record(repo,meta) is None
+    assert approved_record(repo,{**meta,"publication":"publish_on_merge"}) is not None
+    assert approved_record(repo,{**meta,"publication":"approved"}) is not None
+    private={**repo,"private":True}
+    assert approved_record(private,{**meta,"visibility":"private",
+        "publication":"publish_on_merge","public_private_approved":False}) is None
+
+
+def test_auto_proposal_prepared_only_for_public_merge():
+    from scripts.auto_vitrine import inferred
+    class FakeSource:
+        def tree(self,*args):return []
+        def file(self,*args):return None
+    repo={"name":"visible","private":False,"size":0,"language":"Python",
+          "owner":{"login":"musikfed"},"default_branch":"main","html_url":"https://github.com/musikfed/visible"}
+    assert inferred(repo,FakeSource(),"musikfed")["publication"]=="publish_on_merge"
+    assert inferred({**repo,"private":True},FakeSource(),"musikfed")["publication"]=="review_required"
+
+
+def test_review_queue_marks_native_pr_as_ready_to_merge():
+    class MergeReady(FakeGit):
+        def api(self,method,path,missing_ok=False):
+            if "/contents/vitrine/meta.json" in path:
+                self.used+=1
+                meta={"id":"visible","visibility":"public","publication":"publish_on_merge",
+                      "title":"Visible UI","description":"Real source project","version":"1.0","tags":[]}
+                return {"encoding":"base64","content":base64.b64encode(json.dumps(meta).encode()).decode()}
+            return super().api(method,path,missing_ok)
+    items=review_items(MergeReady(),"musikfed",[repository("visible")])
+    assert len(items)==1
+    assert items[0]["publish_on_merge"] is True
+    assert items[0]["publication"]=="publish_on_merge"

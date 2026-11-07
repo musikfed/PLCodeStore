@@ -15,10 +15,10 @@
 <main class="container review-page" id="main">
 <div class="review-hero"><div><div class="eyebrow">PL CODE STORE / GITHUB REVIEW</div>
 <h1>Решение <em>автора.</em></h1>
-<p>Реальные предложения <code>vitrine/</code> в публичных проектах. Проверь экран, описание и версию; затем выбери решение. GitHub откроет готовую заявку — тебе останется подтвердить её создание. Закрытые PR остаются в закрытых репозиториях.</p></div>
+<p>Реальные предложения <code>vitrine/</code> в публичных проектах. Проверь экран, описание и версию; затем выбери решение. GitHub откроет Pull Request проекта. Если всё устраивает, нажми Merge pull request: это и есть твоё разрешение публикации. Закрытые PR остаются в закрытых репозиториях.</p></div>
 <div class="review-total"><span id="review-available">0</span><small>ожидают<br>рассмотрения</small></div></div>
-<div class="review-guide"><span><b>❤️ Вправо</b> — одобрить через подтверждение GitHub</span>
-<span><b>🛑 Влево</b> — вернуть на доработку; комментарий необязателен</span><span><b>⏭ Пропустить на потом</b> — убрать карточку из очереди в этом браузере</span></div>
+<div class="review-guide"><span><b>❤️ Вправо</b> — открыть исходный PR и подтвердить Merge</span>
+<span><b>🛑 Влево</b> — отложить на доработку; комментарий в GitHub необязателен</span><span><b>⏭ Пропустить на потом</b> — убрать карточку из очереди в этом браузере</span></div>
 <div class="review-status" id="review-status" role="status">Загрузка публичной очереди…</div>
 <section class="real-review" id="review-workspace" hidden>
 <div class="review-work-card" id="review-work-card" aria-live="polite"></div>
@@ -28,8 +28,12 @@
 <p id="review-empty-description">После Discover и сборки Pages здесь появятся карточки для проверки.</p>
 <div class="hero-actions"><a class="btn btn-primary" href="https://github.com/musikfed/PLCodeStore/actions/workflows/discover.yml" target="_blank" rel="noopener noreferrer">Запустить обнаружение ↗</a>
 <a class="btn btn-secondary" href="https://github.com/pulls" target="_blank" rel="noopener noreferrer">Мои Pull Requests ↗</a></div></section>
-<div class="review-toolbar"><button type="button" id="review-unhide">Нет отложенных</button><button type="button" id="review-refresh">Обновить список</button></div>
-<div class="review-disclaimer"><strong>Безопасное разделение:</strong> эта страница статическая и не хранит GitHub-токен. Три галочки и «Пропустить на потом» сохраняются лишь в браузере. «Следующая» просто перелистывает карточки; пропущенные можно вернуть. ❤️ и 🛑 создают заранее заполненную заявку в GitHub: после твоего подтверждения Actions меняет <code>publication</code>, объединяет PR или оставляет замечания. Для закрытых проектов отдельно требуется <code>public_private_approved: true</code>.</div>
+<div class="review-toolbar"><button type="button" id="review-unhide">Нет отложенных</button><button type="button" id="review-refresh">Обновить список / проверить PR</button></div>
+<section class="review-summary-grid" aria-label="Статус публикации">
+<div class="review-summary" id="review-waiting"><div class="review-list-title">Переданы на подтверждение или доработку</div></div>
+<div class="review-summary" id="review-published"><div class="review-list-title">Уже на витрине</div></div>
+</section>
+<div class="review-disclaimer"><strong>Безопасное разделение:</strong> эта страница статическая и не хранит GitHub-токен. Три галочки и «Пропустить на потом» сохраняются лишь в браузере. «Следующая» просто перелистывает карточки; пропущенные можно вернуть. Для публичных проектов Merge Pull Request в GitHub служит разрешением публикации: редактировать JSON и создавать Issues не нужно. После Merge карточка появляется на витрине при следующей сборке Pages. Кнопки «На доработку» и «Пропустить» сохраняют состояние локально; комментарий в GitHub отправляется только тобой. Для закрытых проектов отдельно требуется явное разрешение <code>public_private_approved: true</code>.</div>
 </main>
 <footer class="footer"><div class="container footer-inner"><a href="../">← К PL Code Store</a><small>Маркетинг — это папка. Публикация — это решение автора.</small></div></footer>
 </body></html>

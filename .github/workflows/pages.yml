@@ -8,7 +8,7 @@ on:
       - "docs/assets/**"
       - ".github/workflows/pages.yml"
   workflow_run:
-    workflows: ["Discover and propose vitrine metadata", "Author decision from Review Studio"]
+    workflows: ["Discover and propose vitrine metadata"]
     types: [completed]
     branches: [main]
   schedule:
