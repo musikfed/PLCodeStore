@@ -1,5 +1,23 @@
 # PL Code Store — Marketing is a Folder
 
+## Главный режим — GitHub Actions → GitHub Pages (без своего сервера)
+
+**Новая витрина создаётся только из исходных папок `vitrine/`**, а не копированием `view_my_prj`.
+
+- GitHub Actions: `scripts/auto_vitrine.py` — экономный ежедневный поиск репозиториев, создание предложений `vitrine/` через Pull Request.
+- Автор: **Approve / Request changes / Merge** внутри GitHub (можно перейти из будущего Review Studio на GitHub Pages).
+- GitHub Actions: `scripts/build_pages.py` — статический HTML только из одобренных `vitrine/meta.json`, включая оформленные закрытые проекты без ссылок на код.
+- GitHub Pages: `https://musikfed.github.io/PLCodeStore/` — презентация продукта и каталог.
+- **Один** `PL_CODESTORE_TOKEN` в Secrets Actions достаточно для выбранных исходных репозиториев; токен не размещается в браузере.
+- Встроенный `GITHUB_TOKEN` ограничен одним репозиторием и для управления остальными проектами не подходит.
+
+[Полная инструкция настройки GitHub, токена и правил публикации](docs/GITHUB_AUTOMATION.md).
+
+**Важно:** статическая демонстрация свайпов на Pages не производит Git-операций. Реальное решение принимается в PR, где GitHub предоставляет Approve, Request changes и Merge.
+
+---
+
+
 **«Маркетинг — это папка. Публикация — это решение автора».**
 
 Local-first, Git-provider-neutral tool for preparing, reviewing, and publishing authentic software-project showcases. An author reviews each version before it can be published.
