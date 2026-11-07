@@ -107,3 +107,20 @@ def test_only_documents_and_wallpaper_means_no_real_screenshot():
     repo={"name":"Irila_baikal_v1.0","private":False,
           "owner":{"login":"musikfed"},"default_branch":"main"}
     assert images(nodes,repo)==[]
+
+
+def test_hombo_webui_root_images_are_real_priority():
+    from scripts.auto_vitrine import images
+    nodes=[
+        {"path":"docs/screenshots/frontend-code-preview.png","type":"blob","size":1721},
+        {"path":"docs/showcase/overview.svg","type":"blob","size":2509},
+        {"path":"webui (1).png","type":"blob","size":992095},
+        {"path":"webui (2).png","type":"blob","size":900347},
+        {"path":"webui (3).png","type":"blob","size":378721},
+    ]
+    repo={"name":"Hombo3_3.0.0","private":False,"owner":{"login":"musikfed"},"default_branch":"main"}
+    winners=images(nodes,repo)
+    assert len(winners)==3
+    assert winners[0].endswith("webui%20%281%29.png")
+    assert winners[1].endswith("webui%20%282%29.png")
+    assert winners[2].endswith("webui%20%283%29.png")
