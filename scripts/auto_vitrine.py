@@ -18,6 +18,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from scripts.vitrine_cover import cover as make_cover
 
 ROOT=Path(__file__).resolve().parents[1]
 PROPOSAL_BRANCH="plcodestore/vitrine-proposal"
@@ -97,18 +98,9 @@ def images(tree,repo):
             +urllib.parse.quote(branch,safe="")+"/"+urllib.parse.quote(path,safe="/")
             for _,path in choices[:3]]
 
-def cover(name,ver,mode):
-    """An honest, automatically generated SVG schematic, not an app screenshot."""
-    title=html.escape(name[:55]);v=html.escape(ver[:45]);label=html.escape(mode)
-    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675">'
-      '<rect width="1200" height="675" fill="#0e1722"/>'
-      '<rect x="65" y="65" width="1070" height="545" rx="26" fill="#172936" stroke="#536a7d" stroke-width="2"/>'
-      '<path d="M850 240h240v200H850z M970 240v-60 M970 440v60" stroke="#c79c70" stroke-width="5" fill="none"/>'
-      '<text x="115" y="133" fill="#deb27d" font-size="24" font-family="monospace">PL CODE STORE / SCHEMATIC COVER</text>'
-      '<text x="115" y="294" fill="#f6eade" font-size="52" font-family="Arial" font-weight="bold">'+title+'</text>'
-      '<text x="115" y="355" fill="#adbfcc" font-size="26" font-family="Arial">'+label+'</text>'
-      '<text x="115" y="520" fill="#8bd4b7" font-size="28" font-family="monospace">VERSION '+v+'</text>'
-      '<text x="115" y="568" fill="#879dab" font-size="18" font-family="monospace">DIAGRAM / NOT A SCREENSHOT</text></svg>')
+def cover(name, ver, mode, visibility="public"):
+    """Illustrative artistic cover: reproducible, not a screenshot."""
+    return make_cover(name, ver, mode=mode, visibility=visibility)
 
 def inferred(repo,gh,owner):
     private=bool(repo.get("private"))
@@ -140,7 +132,7 @@ def propose(gh,owner,repo,meta):
                {"branch":PROPOSAL_BRANCH,"message":message,
                 "content":base64.b64encode(text.encode("utf-8")).decode()})
     put("vitrine/meta.json",json.dumps(meta,ensure_ascii=False,indent=2)+"\n","chore: propose vitrine metadata")
-    put("vitrine/generated/cover.svg",cover(name,meta["version"],meta["display_mode"]),
+    put("vitrine/generated/cover.svg",cover(name,meta["version"],meta["display_mode"],meta["visibility"]),
         "chore: create labeled vitrine schematic cover")
     gh.api("POST","/repos/"+owner+"/"+name+"/pulls",{
         "title":"PL Code Store: create vitrine/ standard",
@@ -177,9 +169,10 @@ def scan(gh,owner,state_path,drafts,max_repos=7,max_prs=2,open_prs=False):
                 except (urllib.error.HTTPError,RuntimeError) as exc:
                     status="PR unavailable: "+str(exc)
         processed+=1
-        if isinstance(meta,dict):
+        if isinstance(meta,dict) and meta.get("visibility") != "private":
             (drafts/(name+".json")).write_text(json.dumps(meta,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-        changed.append({"repo":name,"status":status,"private":bool(repo.get("private"))})
+        changed.append({"repo":"(private)" if repo.get("private") else name,
+                        "status":status,"private":bool(repo.get("private"))})
     state_path.parent.mkdir(parents=True,exist_ok=True)
     state_path.write_text(json.dumps({"cursor":(cursor+processed)%len(repos) if repos else 0,
        "last_scan":int(time.time())},indent=2)+"\n",encoding="utf-8")
