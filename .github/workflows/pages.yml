@@ -1,0 +1,49 @@
+name: Build and deploy PL Code Store Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "templates/**"
+      - "docs/assets/**"
+      - ".github/workflows/pages.yml"
+  schedule:
+    - cron: "31 6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: plcodestore-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build from each repository's approved vitrine metadata
+        env:
+          PL_CODESTORE_TOKEN: ${{ secrets.PL_CODESTORE_TOKEN }}
+        run: |
+          python -m scripts.build_pages --owner musikfed --out _site --budget 160
+          test -f _site/index.html
+          test -f _site/sitemap.xml
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - id: publish
+        uses: actions/deploy-pages@v4

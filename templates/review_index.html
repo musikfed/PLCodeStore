@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="color-scheme" content="dark">
+<title>Review Studio — PL Code Store</title>
+<meta name="description" content="Проверка реальных предложений vitrine/ перед публикацией.">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css"><link rel="stylesheet" href="../assets/review.css">
+<script src="../assets/review.js" defer></script></head>
+<body>
+<header class="site-header"><div class="container header-in">
+<a class="brand" href="../"><span class="mark">PL<span class="mark-notch">⌁</span></span><span class="brand-name">CODE <b>STORE</b><small>REVIEW STUDIO</small></span></a>
+<nav class="nav"><a href="../#concept">Концепция</a><a href="../#gallery">Витрина</a><a href="../#workflow">Автоматизация</a></nav>
+<a class="header-git" href="https://github.com/musikfed/PLCodeStore" target="_blank" rel="noopener noreferrer">Репозиторий ↗</a>
+</div></header>
+<main class="container review-page" id="main">
+<div class="review-hero"><div><div class="eyebrow">PL CODE STORE / GITHUB REVIEW</div>
+<h1>Решение <em>автора.</em></h1>
+<p>Реальные предложения <code>vitrine/</code> в публичных проектах. Проверь экран, описание и версию; затем согласуй изменения в GitHub. Закрытые PR остаются в закрытых репозиториях.</p></div>
+<div class="review-total"><span id="review-available">0</span><small>ожидают<br>рассмотрения</small></div></div>
+<div class="review-guide"><span><b>❤️ Вправо</b> — открыть редактирование метаданных для одобрения</span>
+<span><b>🛑 Влево</b> — написать замечания в GitHub PR</span><span><b>◷ Позже</b> — отложить в этом браузере</span></div>
+<div class="review-status" id="review-status" role="status">Загрузка публичной очереди…</div>
+<section class="real-review" id="review-workspace" hidden>
+<div class="review-work-card" id="review-work-card" aria-live="polite"></div>
+<div class="review-toolbar"><button type="button" id="review-unhide">Показать отложенные</button><button type="button" id="review-refresh">Обновить список</button></div>
+</section>
+<section class="review-empty" id="review-empty" hidden>
+<div class="review-empty-icon">✓</div><h2>Очередь на сегодня пуста.</h2>
+<p>Когда обнаружение GitHub Actions создаст предложения с папками <code>vitrine/</code>, карточки появятся здесь после сборки Pages. Сами решения подтверждаются в GitHub, а не анонимным нажатием на публичной странице.</p>
+<div class="hero-actions"><a class="btn btn-primary" href="https://github.com/musikfed/PLCodeStore/actions/workflows/discover.yml" target="_blank" rel="noopener noreferrer">Запустить обнаружение ↗</a>
+<a class="btn btn-secondary" href="https://github.com/pulls" target="_blank" rel="noopener noreferrer">Мои Pull Requests ↗</a></div></section>
+<div class="review-disclaimer"><strong>Безопасное разделение:</strong> эта страница статическая и не хранит GitHub-токен. Галочки и «Позже» сохраняются лишь в браузере. Реальное разрешение публикации — коммит <code>publication: "approved"</code> и объединение PR в исходном проекте. Для закрытых проектов также нужен <code>public_private_approved: true</code>.</div>
+</main>
+<footer class="footer"><div class="container footer-inner"><a href="../">← К PL Code Store</a><small>Маркетинг — это папка. Публикация — это решение автора.</small></div></footer>
+</body></html>

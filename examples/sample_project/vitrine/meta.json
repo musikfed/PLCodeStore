@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "id": "demo-camera",
+  "title": "Demo Camera",
+  "version": "0.2.0",
+  "description": "A sample product for validating the local review and publication workflow.",
+  "tags": ["Python", "Computer Vision"],
+  "visibility": "public",
+  "publication": "approved",
+  "repo_url": "https://github.com/example/demo-camera",
+  "demo_url": null,
+  "screenshots": []
+}

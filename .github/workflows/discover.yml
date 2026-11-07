@@ -1,0 +1,53 @@
+name: Discover and propose vitrine metadata
+on:
+  schedule:
+    - cron: "19 5 * * *"
+  workflow_dispatch:
+    inputs:
+      full_scan:
+        description: "Повторно просмотреть все репозитории, а не только изменения"
+        required: false
+        type: boolean
+        default: false
+      propose_prs:
+        description: "Создать Pull Request с vitrine/ в исходных проектах"
+        required: false
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: plcodestore-discovery
+  cancel-in-progress: false
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Restore last GitHub discovery state
+        uses: actions/cache/restore@v4
+        with:
+          path: .plcodestore-cache/state.json
+          key: plcs-discovery-${{ github.run_id }}
+          restore-keys: |
+            plcs-discovery-
+      - name: First run inventories all projects; later runs inspect changed projects
+        env:
+          PL_CODESTORE_TOKEN: ${{ secrets.PL_CODESTORE_TOKEN }}
+          FULL_SCAN: ${{ inputs.full_scan || 'false' }}
+          PROPOSE: ${{ github.event_name == 'schedule' || inputs.propose_prs }}
+        run: |
+          args=(--owner musikfed --max-repos 60 --max-prs 6 --budget 350
+            --state .plcodestore-cache/state.json --drafts .plcodestore-cache/drafts)
+          if [ "$FULL_SCAN" = "true" ]; then args+=(--full-scan); fi
+          if [ "$PROPOSE" = "true" ]; then args+=(--propose-prs); fi
+          python -m scripts.auto_vitrine "${args[@]}"
+      - name: Save incremental discovery state for next scheduled run
+        uses: actions/cache/save@v4
+        with:
+          path: .plcodestore-cache/state.json
+          key: plcs-discovery-${{ github.run_id }}

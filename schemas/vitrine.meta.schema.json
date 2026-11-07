@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PL Code Store vitrine/meta.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "version",
+    "description",
+    "tags",
+    "visibility",
+    "publication"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 60
+      },
+      "maxItems": 30
+    },
+    "visibility": {
+      "enum": [
+        "public",
+        "private",
+        "internal"
+      ]
+    },
+    "publication": {
+      "enum": [
+        "disabled",
+        "review_required",
+        "approved"
+      ]
+    },
+    "repo_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "demo_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "screenshots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "public_private_approved": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}
