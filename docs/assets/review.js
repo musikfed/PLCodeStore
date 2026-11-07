@@ -1,10 +1,9 @@
 /* Real public PR queue: GitHub credentials never enter this page. */
 (()=>{'use strict';
 const checks=[
- ['identity','Название и назначение'],['description','Описание соответствует коду'],
- ['screenshots','Обложка / реальные материалы'],['links','Ссылки и версия'],
- ['privacy','Разрешённые публичные сведения'],['security','Нет секретов и персональных контактов'],
- ['seo','Заголовки и представление']];
+ ['meaning','Название и описание соответствуют проекту'],
+ ['visual','Внешний вид и обложка подходят'],
+ ['publication','Информацию разрешено публиковать (без секретов и личных контактов)']];
 const work=document.getElementById('review-workspace');
 const card=document.getElementById('review-work-card');
 const status=document.getElementById('review-status');
@@ -22,9 +21,16 @@ function targetOf(item,part){
  if(!/^https:\/\/github\.com\/musikfed\/[A-Za-z0-9._-]+\//.test(url))return null;
  return url;
 }
+function decisionUrl(item,action,note){
+ // GitHub pre-fills the Issue, and the logged-in author confirms with Submit new issue.
+ // No access token or write credentials are ever embedded in static Pages.
+ const url=new URL('https://github.com/musikfed/PLCodeStore/issues/new');
+ url.searchParams.set('title','PLCS REVIEW '+action+' '+item.repository+'#'+item.number);
+ url.searchParams.set('body','Revision: '+item.revision+'\\nChecks: '+(action==='APPROVE'?'3/3':'not required')+'\\n\\nЗамечания (необязательно):\\n'+(note||''));
+ return url.toString();
+}
 function openReal(item,url,feedback){
  if(!url){showMessage('Ссылка на GitHub недоступна.');return}
- // Opens first, directly within a user gesture, to avoid popup blocking.
  window.open(url,'_blank','noopener,noreferrer');
  showMessage(feedback);
 }
@@ -51,12 +57,12 @@ function render(){
   '<div class="review-tags"><span>'+safe(item.version && !['0.0.0','—','unknown'].includes(item.version) ? 'v'+item.version : 'Версия не указана')+'</span>'+item.tags.map(t=>'<span>'+safe(t)+'</span>').join('')+'</div>'+
   '<figure class="review-art"><img loading="lazy" src="'+safe(photo)+'" alt="Материалы проекта '+safe(item.title)+'"><figcaption>'+safe(item.image_caption||'Сгенерированная графическая обложка — не скриншот программы')+'</figcaption></figure>'+thumbHtml+
   '<div class="review-card-links"><a id="review-git-pr" target="_blank" rel="noopener noreferrer">Открыть PR в GitHub ↗</a><a id="review-git-edit" target="_blank" rel="noopener noreferrer">Редактировать meta.json ↗</a></div>'+
-  '<div class="checks-title">СЕМЬ КРИТЕРИЕВ ПЕРЕД ПУБЛИКАЦИЕЙ</div>'+
+  '<div class="checks-title">ТРИ ПРОВЕРКИ ДЛЯ ПУБЛИКАЦИИ</div>'+
   '<div class="review-checks">'+checks.map(([k,label])=>'<label><input type="checkbox" data-check="'+safe(k)+'" '+(checked.includes(k)?'checked':'')+'> '+safe(label)+'</label>').join('')+'</div>'+
-  '<div class="review-note"><label for="review-comment">Что исправить? (обязательно при 🛑)</label><textarea id="review-comment" maxlength="4000" placeholder="Конкретные замечания автору…">'+safe(review.comment||'')+'</textarea></div>'+
-  '<div class="review-action-buttons"><button type="button" id="review-reject" class="reject">🛑 На доработку</button><button type="button" id="review-defer">◷ Позже</button><button type="button" id="review-approve" class="approve">❤️ Подготовить одобрение</button></div>'+
+  '<div class="review-note"><label for="review-comment">Комментарий или замечания (необязательно)</label><textarea id="review-comment" maxlength="4000" placeholder="Можно оставить пустым или описать, что улучшить…">'+safe(review.comment||'')+'</textarea></div>'+
+  '<div class="review-action-buttons"><button type="button" id="review-reject" class="reject">🛑 На доработку</button><button type="button" id="review-defer">◷ Позже</button><button type="button" id="review-approve" class="approve">❤️ Одобрить через GitHub</button></div>'+
   '<p class="review-message" id="review-message" role="status"></p>'+
-  '<div class="review-pagination"><button id="review-previous" type="button">← Предыдущая</button><span class="review-break">Решение сохранит только GitHub</span><button id="review-next" type="button">Следующая →</button></div>';
+  '<div class="review-pagination"><button id="review-previous" type="button">← Предыдущая</button><span class="review-break">GitHub попросит подтвердить готовую заявку</span><button id="review-next" type="button">Следующая →</button></div>';
  card.appendChild(outer);
  if(verifiedImages.length>1){
   const mainPhoto=card.querySelector('.review-art img');
@@ -88,16 +94,14 @@ function render(){
  function act(type){
   if(type==='defer'){setState(item,{...getState(item),deferred:true});status.textContent='Карточка отложена локально. В GitHub она всё ещё ожидает решения.';render();return;}
   if(type==='approve'){
-   if(approve.disabled){showMessage('Сначала отметь все семь проверок.');return;}
-   openReal(item,targetOf(item,'edit'),'Открыт редактор GitHub. Установи publication: "approved", сохрани файл в ветке PR, затем объедини PR.');
+   if(approve.disabled){showMessage('Отметь три обязательные проверки.');return;}
+   openReal(item,decisionUrl(item,'APPROVE',comment.value.trim()),
+     'GitHub открыл предварительно заполненное решение. Нажми «Submit new issue» — Actions сам обновит JSON и объединит PR.');
    return;
   }
   if(type==='reject'){
-   const note=comment.value.trim();
-   if(!note){showMessage('Напиши замечания перед отправкой на доработку.');comment.focus();return;}
-   // Native GitHub PR is the only place where remarks are actually submitted.
-   openReal(item,targetOf(item,'pr')+'#issuecomment-new','PR открыт. Вставь замечания в комментарий и отправь их в GitHub.');
-   if(navigator.clipboard?.writeText){navigator.clipboard.writeText(note).then(()=>showMessage('Замечание скопировано. Открой комментарий PR и вставь текст.')).catch(()=>showMessage('Скопируй текст из поля и отправь комментарий в открытом PR.'));}
+   openReal(item,decisionUrl(item,'REWORK',comment.value.trim()),
+     'GitHub открыл готовое замечание. Нажми «Submit new issue» — Actions оставит PR на доработку. Комментарий необязателен.');
   }
  }
  card.querySelector('#review-reject').onclick=()=>act('reject');
