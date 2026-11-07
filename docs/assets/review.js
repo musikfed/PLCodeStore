@@ -42,8 +42,8 @@ function render(){
  outer.innerHTML='<div class="review-card-top"><span>PROPOSAL / '+safe(item.id)+'</span><span>'+String(selected+1).padStart(2,'0')+' / '+String(available.length).padStart(2,'0')+'</span></div>'+
   '<h2 class="review-card-title">'+safe(item.title)+'</h2>'+
   '<p class="review-card-description">'+safe(item.description)+'</p>'+
-  '<div class="review-tags"><span>v'+safe(item.version)+'</span>'+item.tags.map(t=>'<span>'+safe(t)+'</span>').join('')+'</div>'+
-  '<figure class="review-art"><img loading="lazy" src="'+safe(photo)+'" alt="Материалы проекта '+safe(item.title)+'"><figcaption>'+ (item.image?'Проверенный скриншот из исходного репозитория':'Сгенерированная дизайнерская обложка — не скриншот программы')+'</figcaption></figure>'+
+  '<div class="review-tags"><span>'+safe(item.version && !['0.0.0','—','unknown'].includes(item.version) ? 'v'+item.version : 'Версия не указана')+'</span>'+item.tags.map(t=>'<span>'+safe(t)+'</span>').join('')+'</div>'+
+  '<figure class="review-art"><img loading="lazy" src="'+safe(photo)+'" alt="Материалы проекта '+safe(item.title)+'"><figcaption>'+safe(item.image_caption||'Сгенерированная графическая обложка — не скриншот программы')+'</figcaption></figure>'+
   '<div class="review-card-links"><a id="review-git-pr" target="_blank" rel="noopener noreferrer">Открыть PR в GitHub ↗</a><a id="review-git-edit" target="_blank" rel="noopener noreferrer">Редактировать meta.json ↗</a></div>'+
   '<div class="checks-title">СЕМЬ КРИТЕРИЕВ ПЕРЕД ПУБЛИКАЦИЕЙ</div>'+
   '<div class="review-checks">'+checks.map(([k,label])=>'<label><input type="checkbox" data-check="'+safe(k)+'" '+(checked.includes(k)?'checked':'')+'> '+safe(label)+'</label>').join('')+'</div>'+
