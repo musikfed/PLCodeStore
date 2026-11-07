@@ -1,0 +1,24 @@
+name: Discover and propose vitrine metadata
+on:
+  schedule:
+    - cron: "19 5 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plcodestore-discovery
+  cancel-in-progress: false
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Scan daily GitHub batch and propose vitrine PRs
+        env:
+          PL_CODESTORE_TOKEN: ${{ secrets.PL_CODESTORE_TOKEN }}
+        run: |
+          python -m scripts.auto_vitrine --owner musikfed --max-repos 7 --max-prs 2 --budget 160 --propose-prs
