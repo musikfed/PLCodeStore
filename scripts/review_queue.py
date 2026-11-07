@@ -75,7 +75,7 @@ def review_items(gh, owner, repos, max_repos=65):
                 continue
             if not isinstance(meta,dict) or meta.get("id") != name or meta.get("visibility")!="public":
                 continue
-            if meta.get("publication") not in ("review_required","approved"):
+            if meta.get("publication") not in ("review_required","approved","publish_on_merge"):
                 continue
             # Only allowlisted author-reviewed public fields are exported.
             title=str(meta.get("title") or name)[:160]
@@ -100,6 +100,7 @@ def review_items(gh, owner, repos, max_repos=65):
                 "tags":tags,"pr_url":pr_url,"edit_url":edit_url,
                 "image":real_image,"images":real_images[:4],"image_caption":image_caption,
                 "status":str(meta.get("status") or "Ожидает решения")[:100],
+                "publication":meta.get("publication"),
             })
     return sorted(found,key=lambda r:(r["repository"].lower(),r["number"]))
 
