@@ -226,6 +226,8 @@ def propose(gh,owner,repo,meta):
     put("vitrine/meta.json",json.dumps(meta,ensure_ascii=False,indent=2)+"\n","chore: propose vitrine metadata")
     put("vitrine/generated/cover.svg",cover(name,meta["version"],meta["display_mode"],meta["visibility"]),
         "chore: create labeled vitrine schematic cover")
+    guide=(ROOT/"docs"/"VITRINE_MEDIA.md").read_text(encoding="utf-8")
+    put("vitrine/README.md",guide,"docs: explain screenshot paths and publication standard")
     gh.api("POST","/repos/"+owner+"/"+name+"/pulls",{
         "title":"PL Code Store: create vitrine/ standard",
         "head":PROPOSAL_BRANCH,"base":repo.get("default_branch","main"),
