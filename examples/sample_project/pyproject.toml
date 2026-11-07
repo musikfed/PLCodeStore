@@ -1,0 +1,4 @@
+[project]
+name = "demo-camera"
+version = "0.2.0"
+description = "Example computer-vision project for PL Code Store"

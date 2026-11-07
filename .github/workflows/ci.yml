@@ -1,0 +1,26 @@
+name: Tests and build
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package and tests
+        run: python -m pip install -e '.[dev]'
+      - name: Run unit and security tests
+        run: python -m pytest -q
+      - name: CLI smoke test
+        run: |
+          python -m plcodestore.cli scan . > /tmp/project-scan.json
+          python -m plcodestore.cli --db /tmp/pl-test.sqlite3 build --out /tmp/pl-preview
+          test -f /tmp/pl-preview/index.html
