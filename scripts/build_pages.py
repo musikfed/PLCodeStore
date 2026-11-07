@@ -16,6 +16,7 @@ from pathlib import Path
 from urllib.parse import quote, urlsplit
 from scripts.auto_vitrine import Git
 from scripts.vitrine_cover import cover
+from scripts.review_queue import review_items, write_queue
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "https://musikfed.github.io/PLCodeStore/"
@@ -115,7 +116,7 @@ def details_html(p):
       'Обложки — самостоятельная графика, не имитация интерфейса.</p></main>'
       '<footer><a href="../../">PL CODE STORE</a><span>Маркетинг — это папка.</span></footer></body></html>')
 
-def build(projects: list[dict], output: Path):
+def build(projects: list[dict], output: Path, review=None):
     out=Path(output).resolve()
     out.mkdir(parents=True,exist_ok=True)
     shutil.copytree(ROOT/"docs"/"assets",out/"assets",dirs_exist_ok=True)
@@ -128,6 +129,9 @@ def build(projects: list[dict], output: Path):
          .replace("<!--PROJECT_COUNT-->",str(len(projects)))
          .replace("<!--CATEGORY_OPTIONS-->",options))
     (out/"index.html").write_text(page,encoding="utf-8")
+    (out/"review").mkdir(exist_ok=True)
+    shutil.copyfile(ROOT/"templates"/"review_index.html",out/"review"/"index.html")
+    write_queue(out, review or [])
     (out/"data").mkdir(exist_ok=True)
     (out/"data"/"projects.json").write_text(
         json.dumps({"source":"author-approved vitrine/meta.json from GitHub","projects":projects},
@@ -160,7 +164,11 @@ def main():
     parser.add_argument("--max-repos",type=int,default=120)
     args=parser.parse_args()
     token=os.getenv("PL_CODESTORE_TOKEN") or os.getenv("GITHUB_TOKEN")
-    items=collect(Git(token,budget=args.budget),args.owner,args.max_repos)
-    build(items,args.out)
-    print("Published",len(items),"explicitly approved projects")
+    gh=Git(token,budget=args.budget)
+    items=collect(gh,args.owner,args.max_repos)
+    # Public review queue comes from genuine open source-repo PRs,
+    # never from the mockup and never from private repositories.
+    pending=review_items(gh,args.owner,gh.repos(args.owner),args.max_repos)
+    build(items,args.out,review=pending)
+    print("Published",len(items),"approved products; review queue",len(pending))
 if __name__=="__main__":main()
