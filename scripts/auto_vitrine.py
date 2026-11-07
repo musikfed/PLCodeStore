@@ -101,8 +101,8 @@ def image_candidates(tree,repo):
             continue
         lower=path.lower()
         is_raster=lower.endswith((".png",".jpg",".jpeg",".webp"))
-        screenshot_hints=("screenshot","screen","studio","desktop","capture","interface","ui-preview")
-        has_hint=any(t in lower for t in screenshot_hints)
+        screenshot_hints=("screenshot","screen","studio","desktop","capture","interface","ui-preview","webui","web-ui","dashboard","gui")
+        has_hint=any(t in Path(lower).name for t in screenshot_hints)
         in_vitrine=lower.startswith("vitrine/screenshots/")
         in_known=lower.startswith(IMAGE_PREFIX)
         is_root="/" not in path
