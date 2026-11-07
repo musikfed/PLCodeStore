@@ -1,0 +1,25 @@
+name: Author decision from Review Studio
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: plcs-review-decisions
+  cancel-in-progress: false
+jobs:
+  process:
+    if: ${{ github.event.issue.user.login == github.repository_owner && startsWith(github.event.issue.title, 'PLCS REVIEW ') && !github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Authorize reviewer and process exactly one approved vitrine PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PL_CODESTORE_TOKEN: ${{ secrets.PL_CODESTORE_TOKEN }}
+        run: python -m scripts.author_decision

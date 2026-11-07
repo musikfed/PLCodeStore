@@ -5,7 +5,7 @@
 **Новая витрина создаётся только из исходных папок `vitrine/`**, а не копированием `view_my_prj`.
 
 - GitHub Actions: `scripts/auto_vitrine.py` — экономный ежедневный поиск репозиториев, создание предложений `vitrine/` через Pull Request.
-- Автор: **Approve / Request changes / Merge** внутри GitHub (можно перейти из будущего Review Studio на GitHub Pages).
+- Автор: **три проверки → ❤️/🛑 → подтверждение готовой GitHub Issue**. Workflow автоматически меняет `publication` и объединяет vitrine-PR или отправляет необязательное замечание.
 - GitHub Actions: `scripts/build_pages.py` — статический HTML только из одобренных `vitrine/meta.json`, включая оформленные закрытые проекты без ссылок на код.
 - GitHub Pages: `https://musikfed.github.io/PLCodeStore/` — презентация продукта и каталог.
 - **Один** `PL_CODESTORE_TOKEN` в Secrets Actions достаточно для выбранных исходных репозиториев; токен не размещается в браузере.
@@ -13,7 +13,7 @@
 
 [Полная инструкция настройки GitHub, токена и правил публикации](docs/GITHUB_AUTOMATION.md).
 
-**Важно:** статическая демонстрация свайпов на Pages не производит Git-операций. Реальное решение принимается в PR, где GitHub предоставляет Approve, Request changes и Merge.
+**Важно:** статический GitHub Pages не содержит токена. Реальное решение выполняет GitHub Actions только после подтверждения владельцем заранее заполненной Issue (`Submit new issue`). Вручную менять JSON больше не требуется.
 
 ---
 
@@ -22,7 +22,7 @@
 
 Local-first, Git-provider-neutral tool for preparing, reviewing, and publishing authentic software-project showcases. An author reviews each version before it can be published.
 
-> **Status: v0.1 MVP on feature branch.** The parser, review storage, local Review Studio and basic static delivery are implemented. This is *not* yet the complete multi-provider marketplace or a replacement for the PEGINELAB showcase.
+> **Status: GitHub-first MVP on main.** Automatic vitrine proposals, public Review Studio and GitHub-native author confirmation are implemented. GitLab/Forgejo write-side automation and single-click authenticated browser operations remain future work.
 
 ## Quick start
 
@@ -38,7 +38,7 @@ plcodestore stage examples/sample_project
 plcodestore review
 ```
 
-Open **http://127.0.0.1:8077**. Check all seven criteria and click ❤️ to approve, or 🛑 to request changes with a comment.
+Open **http://127.0.0.1:8077** for the separate local legacy Studio. The **public GitHub Pages Review Studio** uses three mandatory checks, optional remarks and GitHub IssueOps confirmation.
 
 **Publication is a separate action**, deliberately not triggered by the approval gesture:
 
