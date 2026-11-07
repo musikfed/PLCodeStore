@@ -1,0 +1,47 @@
+name: Capture real static UI previews for vitrine
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/capture_static.py"
+      - ".github/workflows/capture-static.yml"
+  schedule:
+    - cron: "41 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Owner's repository; leave empty to scan at most 15 candidates"
+        required: false
+        type: string
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: plcodestore-capture-static
+  cancel-in-progress: false
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Playwright Chromium (static HTML only)
+        run: |
+          python -m pip install --disable-pip-version-check 'playwright==1.56.0'
+          python -m playwright install --with-deps chromium
+      - name: Capture without application builds or external networking
+        env:
+          PL_CODESTORE_TOKEN: ${{ secrets.PL_CODESTORE_TOKEN }}
+          REPO: ${{ inputs.repository }}
+          EVENT_TYPE: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_TYPE" = "push" ]; then
+            python -m scripts.capture_static --owner musikfed --repo Irila_baikal_v1.0 --budget 90
+          elif [ -n "$REPO" ]; then
+            python -m scripts.capture_static --owner musikfed --repo "$REPO" --budget 90
+          else
+            python -m scripts.capture_static --owner musikfed --auto --budget 160
+          fi
