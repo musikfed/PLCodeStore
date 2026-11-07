@@ -82,8 +82,11 @@ def review_items(gh, owner, repos, max_repos=65):
             desc=str(meta.get("description") or "")[:600]
             version=str(meta.get("version") or "—")[:65]
             tags=[str(x)[:35] for x in meta.get("tags",[])[:12] if isinstance(x,str)]
-            real_image=public_original_image(meta.get("screenshots",[]),
-                                             owner,name,repo.get("default_branch","main"))
+            real_images=[]
+            for asset in meta.get("screenshots",[])[:8] if isinstance(meta.get("screenshots"),list) else []:
+                validated=public_original_image([asset],owner,name,repo.get("default_branch","main"))
+                if validated and validated not in real_images:real_images.append(validated)
+            real_image=real_images[0] if real_images else None
             image_caption=("Векторный макет из исходного репозитория"
                            if real_image and real_image.lower().endswith(".svg")
                            else "Изображение из исходного репозитория"
@@ -95,7 +98,7 @@ def review_items(gh, owner, repos, max_repos=65):
                 "id":name,"repository":f"{owner}/{name}","number":number,
                 "revision":head,"title":title,"description":desc,"version":version,
                 "tags":tags,"pr_url":pr_url,"edit_url":edit_url,
-                "image":real_image,"image_caption":image_caption,
+                "image":real_image,"images":real_images[:4],"image_caption":image_caption,
                 "status":str(meta.get("status") or "Ожидает решения")[:100],
             })
     return sorted(found,key=lambda r:(r["repository"].lower(),r["number"]))
