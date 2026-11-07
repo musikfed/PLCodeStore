@@ -1,5 +1,10 @@
 name: Discover and propose vitrine metadata
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/auto_vitrine.py"
+      - ".github/workflows/discover.yml"
   schedule:
     - cron: "19 5 * * *"
   workflow_dispatch:
@@ -39,9 +44,9 @@ jobs:
         env:
           PL_CODESTORE_TOKEN: ${{ secrets.PL_CODESTORE_TOKEN }}
           FULL_SCAN: ${{ inputs.full_scan || 'false' }}
-          PROPOSE: ${{ github.event_name == 'schedule' || inputs.propose_prs }}
+          PROPOSE: ${{ github.event_name == 'schedule' || github.event_name == 'push' || inputs.propose_prs }}
         run: |
-          args=(--owner musikfed --max-repos 60 --max-prs 6 --budget 350
+          args=(--owner musikfed --max-repos 60 --max-prs 8 --budget 430
             --state .plcodestore-cache/state.json --drafts .plcodestore-cache/drafts)
           if [ "$FULL_SCAN" = "true" ]; then args+=(--full-scan); fi
           if [ "$PROPOSE" = "true" ]; then args+=(--propose-prs); fi
