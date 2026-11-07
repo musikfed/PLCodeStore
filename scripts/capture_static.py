@@ -64,6 +64,9 @@ def capture_static(gh, owner, name, *, requested_entry=None):
 
     tree=gh.tree(owner,name,base)
     paths={n["path"] for n in tree if n.get("type")=="blob"}
+    if requested_entry and (not requested_entry.endswith("/index.html") or
+            ".." in requested_entry.split("/") or requested_entry.startswith("/")):
+        raise ValueError("Unsafe static entrypoint")
     candidates=(requested_entry,) if requested_entry else ENTRYPOINTS
     entry=next((p for p in candidates if p in paths),None)
     if not entry:
@@ -134,17 +137,41 @@ def capture_static(gh, owner, name, *, requested_entry=None):
             "path":IMAGE_DEST,"bytes":len(picture),"entry":entry}
 
 
+def auto_capture(gh,owner,max_checks=15,max_captures=2):
+    """Bounded weekly backlog: missing static previews only, no repetitive rewrites."""
+    all_repos=gh.repos(owner)
+    results=[]
+    checked=captured=0
+    for repo in all_repos:
+        if checked>=max_checks or captured>=max_captures or gh.used+20>=gh.budget:
+            break
+        if repo.get("private") or repo.get("archived"):
+            continue
+        checked+=1
+        info=capture_static(gh,owner,repo["name"])
+        if info.get("status")=="captured static HTML viewport":
+            captured+=1
+        if not str(info.get("status","")).startswith("skip: no proposal"):
+            results.append(info)
+    return {"checked":checked,"captured":captured,"results":results}
+
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--owner",default="musikfed")
     p.add_argument("--repo",default="Irila_baikal_v1.0")
     p.add_argument("--entry",default=None)
-    p.add_argument("--budget",type=int,default=45)
+    p.add_argument("--auto",action="store_true")
+    p.add_argument("--budget",type=int,default=120)
     a=p.parse_args()
     token=__import__("os").getenv("PL_CODESTORE_TOKEN")
     if not token:
         raise SystemExit("PL_CODESTORE_TOKEN is required")
-    result=capture_static(Git(token,budget=a.budget),a.owner,a.repo,requested_entry=a.entry)
+    gh=Git(token,budget=a.budget)
+    if a.auto:
+        result=auto_capture(gh,a.owner)
+    else:
+        result=capture_static(gh,a.owner,a.repo,requested_entry=a.entry)
     print(json.dumps(result,ensure_ascii=False))
 
 if __name__=="__main__":
