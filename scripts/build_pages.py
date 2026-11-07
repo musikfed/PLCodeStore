@@ -40,7 +40,7 @@ def allowed_picture(value, owner, repo, branch):
 
 def approved_record(repo: dict, raw: dict):
     """Allowlist what GitHub Pages may receive from one approved source."""
-    if not isinstance(raw,dict) or raw.get("publication")!="approved":return None
+    if not isinstance(raw,dict) or raw.get("publication") not in ("approved", "publish_on_merge"):return None
     if raw.get("visibility")=="internal":return None
     if raw.get("id")!=repo.get("name") or not ID_RE.fullmatch(str(raw.get("id",""))):
         return None
