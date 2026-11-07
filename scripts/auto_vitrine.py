@@ -81,7 +81,7 @@ def version(repo,gh,owner):
             value=parsed.get("version") if name=="package.json" else parsed.get("project" if name=="pyproject.toml" else "package",{}).get("version")
             if isinstance(value,str) and value:return value[:65]
         except (ValueError,KeyError):pass
-    return "0.0.0"
+    return "—"  # Unverified version must not be invented.
 
 def images(tree,repo):
     if repo.get("private"):return []
@@ -103,16 +103,45 @@ def cover(name, ver, mode, visibility="public"):
     """Illustrative artistic cover: reproducible, not a screenshot."""
     return make_cover(name, ver, mode=mode, visibility=visibility)
 
+def readme_profile(gh,owner,name):
+    """Read author-written project information; do not fabricate marketing claims."""
+    raw=gh.file(owner,name,"README.md")
+    if not raw:return {"title":name,"description":None,"subtitle":None}
+    head=re.search(r"(?m)^#\s+(.{2,160})\s*$",raw)
+    heading=re.sub(r"[\*_\[\]]","",head.group(1)).replace(chr(96),"").strip() if head else name
+    title,sep,subtitle=heading.partition(" — ")
+    if not sep:title,sep,subtitle=heading.partition(" - ")
+    if not title or name.lower() not in title.lower():
+        title=name
+        subtitle=None
+    description=None
+    for block in re.split(r"\n\s*\n",raw):
+        line=block.strip()
+        if not line or line.startswith(("#",">","![","[![",chr(96)*3,"|","- ","* ","1. ")):
+            continue
+        if "](" in line and len(line.split())<10:continue
+        plain=re.sub(r"!?\[([^\]]+)\]\([^)]+\)",r"\1",line)
+        plain=re.sub(r"[\*_]","",plain).replace(chr(96),"")
+        plain=re.sub(r"\s+"," ",plain).strip()
+        if len(plain)<85 or plain.startswith(("Источник:","License:","Status:")):
+            continue
+        description=plain[:350]
+        break
+    return {"title":title[:120],"description":description,
+            "subtitle":subtitle[:140] if subtitle else None}
+
 def inferred(repo,gh,owner):
     private=bool(repo.get("private"))
     is_empty=repo.get("size",0)==0
     tree=[] if is_empty else gh.tree(owner,repo["name"],repo.get("default_branch","main"))
     shots=images(tree,repo)
-    ver="0.0.0" if is_empty else version(repo,gh,owner)
+    ver="—" if is_empty else version(repo,gh,owner)
+    profile={"title":repo["name"],"description":None,"subtitle":None} if is_empty else readme_profile(gh,owner,repo["name"])
     mode="development" if is_empty else "interface" if shots else "diagram"
     status="В разработке" if is_empty else "Черновик — ожидает проверки"
-    return {"schema_version":"1.0","id":repo["name"],"title":repo["name"],"version":ver,
-      "description":(repo.get("description") or "Назначение проекта уточняется автором.")[:350],
+    return {"schema_version":"1.0","id":repo["name"],"title":profile["title"],"version":ver,
+      "description":(repo.get("description") or profile["description"] or "Назначение проекта уточняется автором.")[:350],
+      "subtitle":profile["subtitle"],
       "tags":[repo.get("language") or "Git"],"visibility":"private" if private else "public",
       "publication":"review_required","public_private_approved":False,
       "display_mode":mode,"status":status,"repo_url":None if private else repo.get("html_url"),
