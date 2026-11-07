@@ -83,21 +83,49 @@ def version(repo,gh,owner):
         except (ValueError,KeyError):pass
     return "—"  # Unverified version must not be invented.
 
-def images(tree,repo):
-    if repo.get("private"):return []
+def image_candidates(tree,repo):
+    """Source-verified assets, including root-level photos with spaces in filenames.
+
+    Raster screenshots win over generic diagrams; never claim a UI screenshot
+    where only a decorative SVG or an architecture sketch exists.
+    """
+    if repo.get("private"):
+        return []
     choices=[]
     for node in tree:
         path=node.get("path","")
-        if node.get("type")!="blob" or not path.startswith(IMAGE_PREFIX) or not path.lower().endswith(IMAGE_EXT):continue
-        if node.get("size",0)>3_000_000 or re.search("secret|password|token|private.key",path,re.I):continue
-        score=sum(4 for word in ("dashboard","screen","main","home","overview","preview") if word in path.lower())
-        if "/screenshots/" in path or "/showcase/" in path:score+=2
-        choices.append((score,path))
+        if node.get("type")!="blob" or not path.lower().endswith(IMAGE_EXT):
+            continue
+        if node.get("size",0)>3_000_000 or re.search(
+            r"secret|password|token|private\.key|credential",path,re.I):
+            continue
+        lower=path.lower()
+        is_raster=lower.endswith((".png",".jpg",".jpeg",".webp"))
+        screenshot_hints=("screenshot","screen","studio","desktop","capture","interface","ui-preview")
+        has_hint=any(t in lower for t in screenshot_hints)
+        in_vitrine=lower.startswith("vitrine/screenshots/")
+        in_known=lower.startswith(IMAGE_PREFIX)
+        is_root="/" not in path
+        # Root-level Studio*.jpg is genuine source media; random assets are not.
+        if not (in_vitrine or in_known or (is_root and is_raster and has_hint)):
+            continue
+        if any(t in lower for t in ("logo","favicon","badge","icon","wallpaper","background","watermark")):
+            continue
+        is_diagram=lower.endswith(".svg") or any(t in lower for t in ("diagram","overview","schematic"))
+        score=(150 if in_vitrine else 0)+(90 if is_raster else 0)+(40 if has_hint else 0)
+        score+=(25 if "/screenshots/" in lower else 0)+(10 if is_root else 0)
+        if is_diagram:score-=110
+        choices.append((score,path,node.get("sha"),is_diagram))
     choices.sort(key=lambda x:(-x[0],x[1]))
+    return choices
+
+def images(tree,repo):
     owner=repo["owner"]["login"];branch=repo.get("default_branch","main")
+    # Do not promote a vector workflow sketch as an authentic app screenshot.
+    winners=[x for x in image_candidates(tree,repo) if not x[3]][:3]
     return ["https://raw.githubusercontent.com/"+owner+"/"+repo["name"]+"/"
             +urllib.parse.quote(branch,safe="")+"/"+urllib.parse.quote(path,safe="/")
-            for _,path in choices[:3]]
+            for _,path,_,_ in winners]
 
 def cover(name, ver, mode, visibility="public"):
     """Illustrative artistic cover: reproducible, not a screenshot."""
@@ -161,9 +189,45 @@ def propose(gh,owner,repo,meta):
         gh.api("PUT","/repos/"+owner+"/"+name+"/contents/"+urllib.parse.quote(path,safe="/"),
                {"branch":PROPOSAL_BRANCH,"message":message,
                 "content":base64.b64encode(text.encode("utf-8")).decode()})
+    # Place verified screenshots *inside the source repo* as requested by the
+    # open vitrine/ standard. Each image is copied verbatim, never synthesized.
+    # Only a small, bounded number of source images is copied per proposal.
+    copied=[]
+    source_urls=meta.get("screenshots",[])[:3]
+    base_branch=repo.get("default_branch","main")
+    for ix,url in enumerate(source_urls):
+        parsed=urllib.parse.urlsplit(url)
+        prefix="/"+owner+"/"+name+"/"+urllib.parse.quote(base_branch,safe="")+"/"
+        if parsed.scheme!="https" or parsed.hostname!="raw.githubusercontent.com" or not parsed.path.startswith(prefix):
+            continue
+        source=urllib.parse.unquote(parsed.path[len(prefix):])
+        if source.startswith("vitrine/screenshots/"):
+            copied.append(source)
+            continue
+        if source.startswith("/") or ".." in Path(source).parts:
+            continue
+        suffix=Path(source).suffix.lower()
+        if suffix not in (".png",".jpg",".jpeg",".webp"):
+            continue
+        value=gh.api("GET","/repos/"+owner+"/"+name+"/contents/"
+                     +urllib.parse.quote(source,safe="/")+"?ref="+urllib.parse.quote(base_branch,safe=""),
+                     missing_ok=True)
+        if not isinstance(value,dict) or value.get("encoding")!="base64" or value.get("size",0)>3_000_000:
+            continue
+        destination="vitrine/screenshots/"+("main" if ix==0 else "extra-"+str(ix))+suffix
+        gh.api("PUT","/repos/"+owner+"/"+name+"/contents/"+destination,{
+            "branch":PROPOSAL_BRANCH,
+            "message":"vitrine: include original project screenshot",
+            "content":value["content"].replace("\n",""),
+        })
+        copied.append(destination)
+    meta["screenshots"]=copied
+    meta["screenshot_source"]="original-repository-file" if copied else "not-available"
     put("vitrine/meta.json",json.dumps(meta,ensure_ascii=False,indent=2)+"\n","chore: propose vitrine metadata")
     put("vitrine/generated/cover.svg",cover(name,meta["version"],meta["display_mode"],meta["visibility"]),
         "chore: create labeled vitrine schematic cover")
+    guide=(ROOT/"docs"/"VITRINE_MEDIA.md").read_text(encoding="utf-8")
+    put("vitrine/README.md",guide,"docs: explain screenshot paths and publication standard")
     gh.api("POST","/repos/"+owner+"/"+name+"/pulls",{
         "title":"PL Code Store: create vitrine/ standard",
         "head":PROPOSAL_BRANCH,"base":repo.get("default_branch","main"),

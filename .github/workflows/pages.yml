@@ -8,11 +8,9 @@ on:
       - "docs/assets/**"
       - ".github/workflows/pages.yml"
   workflow_run:
-    workflows: ["Discover and propose vitrine metadata"]
+    workflows: ["Discover and propose vitrine metadata", "Capture real static UI previews for vitrine"]
     types: [completed]
     branches: [main]
-  schedule:
-    - cron: "31 6 * * *"
   workflow_dispatch:
 permissions:
   contents: read

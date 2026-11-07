@@ -125,3 +125,30 @@ def test_review_queue_marks_native_pr_as_ready_to_merge():
     assert len(items)==1
     assert items[0]["publish_on_merge"] is True
     assert items[0]["publication"]=="publish_on_merge"
+
+
+def test_proposal_local_screenshot_is_pinned_to_reviewed_sha():
+    from scripts.review_queue import proposal_media
+    class MediaGit(FakeGit):
+        def api(self,method,path,missing_ok=False):
+            self.used+=1
+            return {"type":"file","size":220000} if "/contents/vitrine/screenshots/main.jpg?" in path else None
+    sha="f"*40
+    link=proposal_media(MediaGit(),"vitrine/screenshots/main.jpg","musikfed","visible","main",sha)
+    assert link==f"https://raw.githubusercontent.com/musikfed/visible/{sha}/vitrine/screenshots/main.jpg"
+    assert proposal_media(MediaGit(),"vitrine/screenshots/../bad.jpg","musikfed","visible","main",sha) is None
+
+
+def test_gallery_source_images_in_delivery(tmp_path):
+    from scripts.build_pages import approved_record
+    repo={"name":"sensor","private":False,"owner":{"login":"musikfed"},
+          "default_branch":"main","html_url":"https://github.com/musikfed/sensor","size":12,
+          "created_at":"2026-10-01T00:00:00Z"}
+    meta={"id":"sensor","title":"Sensor","version":"1.0","description":"sensor display",
+          "publication":"publish_on_merge","visibility":"public","tags":["Python"],
+          "screenshots":["vitrine/screenshots/main.jpg","vitrine/screenshots/extra.png"]}
+    rec=approved_record(repo,meta)
+    assert len(rec["images"])==2
+    build([rec],tmp_path)
+    html=(tmp_path/"projects"/"sensor"/"index.html").read_text()
+    assert "extra.png" in html

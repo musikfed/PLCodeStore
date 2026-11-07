@@ -80,3 +80,30 @@ def test_readme_metadata_does_not_fabricate_version():
     assert profile["subtitle"]=="Типография в кармане"
     assert "локальная издательская студия" in profile["description"]
     assert version({"name":"achewiw"},source,"musikfed")=="—"
+
+
+def test_root_studio_jpg_wins_over_vector_docs_preview():
+    from scripts.auto_vitrine import images, image_candidates
+    nodes=[
+        {"path":"docs/screenshots/studio-preview.svg","type":"blob","size":1721,"sha":"a"*40},
+        {"path":"docs/showcase/overview.svg","type":"blob","size":2509,"sha":"b"*40},
+        {"path":"Studio esp32_2.jpg","type":"blob","size":324518,"sha":"c"*40},
+        {"path":"icon.png","type":"blob","size":100,"sha":"d"*40},
+    ]
+    repo={"name":"esp32s3devkitC-1N16R8","private":False,
+          "owner":{"login":"musikfed"},"default_branch":"main"}
+    found=images(nodes,repo)
+    assert len(found)==1
+    assert found[0].endswith("/Studio%20esp32_2.jpg")
+    assert image_candidates(nodes,repo)[0][1]=="Studio esp32_2.jpg"
+
+
+def test_only_documents_and_wallpaper_means_no_real_screenshot():
+    from scripts.auto_vitrine import images
+    nodes=[
+        {"path":"docs/showcase/overview.svg","type":"blob","size":2509},
+        {"path":"ui/web/assets/baikal.svg","type":"blob","size":2091},
+    ]
+    repo={"name":"Irila_baikal_v1.0","private":False,
+          "owner":{"login":"musikfed"},"default_branch":"main"}
+    assert images(nodes,repo)==[]

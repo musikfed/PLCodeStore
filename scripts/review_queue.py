@@ -43,6 +43,26 @@ def public_original_image(screenshots, owner, repo, branch):
         return "https://raw.githubusercontent.com" + parsed.path
     return None
 
+def proposal_media(gh,item,owner,name,default_branch,head):
+    """Resolve version-pinned images from the pending PR branch.
+
+    Relative vitrine/screenshots files are allowed only when they are *actually
+    present* in the current reviewed PR SHA. This also prevents broken thumbs.
+    """
+    if not isinstance(item,str):
+        return None
+    if item.startswith("vitrine/screenshots/") and not item.startswith("/"):
+        path=item
+        if (".." in path.split("/") or
+            not re.fullmatch(r"vitrine/screenshots/[a-zA-Z0-9_. -]+\.(?:png|jpg|jpeg|webp|svg)",path,re.I)):
+            return None
+        data=gh.api("GET",f"/repos/{owner}/{name}/contents/"
+                    +urllib.parse.quote(path,safe="/")+f"?ref={head}",missing_ok=True)
+        if not isinstance(data,dict) or data.get("type")!="file" or data.get("size",0)>3_000_000:
+            return None
+        return "https://raw.githubusercontent.com/"+owner+"/"+name+"/"+head+"/"+quote(path,safe="/")
+    return public_original_image([item],owner,name,default_branch)
+
 def review_items(gh, owner, repos, max_repos=65):
     found = []
     for repo in repos[:max_repos]:
@@ -84,10 +104,12 @@ def review_items(gh, owner, repos, max_repos=65):
             tags=[str(x)[:35] for x in meta.get("tags",[])[:12] if isinstance(x,str)]
             real_images=[]
             for asset in meta.get("screenshots",[])[:8] if isinstance(meta.get("screenshots"),list) else []:
-                validated=public_original_image([asset],owner,name,repo.get("default_branch","main"))
+                validated=proposal_media(gh,asset,owner,name,repo.get("default_branch","main"),head)
                 if validated and validated not in real_images:real_images.append(validated)
             real_image=real_images[0] if real_images else None
-            image_caption=("Векторный макет из исходного репозитория"
+            image_caption=("Снимок HTML-интерфейса, отрендеренный Playwright (не фото аппаратного запуска)"
+                           if meta.get("screenshot_source")=="browser-rendered-static" and real_image
+                           else "Векторный макет из исходного репозитория"
                            if real_image and real_image.lower().endswith(".svg")
                            else "Изображение из исходного репозитория"
                            if real_image else "Сгенерированная графическая обложка")
