@@ -9,7 +9,7 @@ const card=document.getElementById('review-work-card');
 const status=document.getElementById('review-status');
 const empty=document.getElementById('review-empty');
 const total=document.getElementById('review-available');
-let queue=[],selected=0,hidden={},touched=null;
+let queue=[],selected=0,touched=null;
 const safe=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 function key(item){return 'plcs-review-v2:'+item.repository+':'+item.number+':'+(item.revision||'');}
 function getState(item){try{return JSON.parse(localStorage.getItem(key(item))||'{}')}catch(_){return {}}}
@@ -37,7 +37,18 @@ function openReal(item,url,feedback){
 function render(){
  if(!work||!card)return;
  const available=remaining();total.textContent=String(available.length);
- if(!available.length){work.hidden=true;empty.hidden=false;status.textContent=queue.length?'Все предложения отложены или просмотрены в этом браузере.':'Открытых публичных предложений пока нет.';return;}
+ const deferredCount=queue.length-available.length;
+ const restore=document.getElementById('review-unhide');
+ if(restore){restore.disabled=deferredCount===0;restore.textContent=deferredCount?'Вернуть отложенные ('+deferredCount+')':'Нет отложенных';}
+ if(!available.length){
+  work.hidden=true;empty.hidden=false;
+  document.getElementById('review-empty-title').textContent=deferredCount?'Все карточки отложены':'Очередь на сегодня пуста';
+  document.getElementById('review-empty-description').textContent=deferredCount
+   ? 'Карточки скрыты только в этом браузере. Нажми «Вернуть отложенные», чтобы снова их рассмотреть. В GitHub PR остаются открытыми.'
+   : 'Публичных предложений пока нет. После Discover и сборки Pages здесь появятся карточки для проверки.';
+  status.textContent=deferredCount?'Отложено в этом браузере: '+deferredCount:'Открытых публичных предложений пока нет.';
+  return;
+ }
  work.hidden=false;empty.hidden=true;selected=Math.min(selected,available.length-1);
  const item=available[selected].x,review=getState(item),checked=review.checks||[];
  card.innerHTML='';
@@ -60,7 +71,7 @@ function render(){
   '<div class="checks-title">ТРИ ПРОВЕРКИ ДЛЯ ПУБЛИКАЦИИ</div>'+
   '<div class="review-checks">'+checks.map(([k,label])=>'<label><input type="checkbox" data-check="'+safe(k)+'" '+(checked.includes(k)?'checked':'')+'> '+safe(label)+'</label>').join('')+'</div>'+
   '<div class="review-note"><label for="review-comment">Комментарий или замечания (необязательно)</label><textarea id="review-comment" maxlength="4000" placeholder="Можно оставить пустым или описать, что улучшить…">'+safe(review.comment||'')+'</textarea></div>'+
-  '<div class="review-action-buttons"><button type="button" id="review-reject" class="reject">🛑 На доработку</button><button type="button" id="review-defer">◷ Позже</button><button type="button" id="review-approve" class="approve">❤️ Одобрить через GitHub</button></div>'+
+  '<div class="review-action-buttons"><button type="button" id="review-reject" class="reject">🛑 На доработку</button><button type="button" id="review-defer">⏭ Пропустить на потом</button><button type="button" id="review-approve" class="approve">❤️ Одобрить через GitHub</button></div>'+
   '<p class="review-message" id="review-message" role="status"></p>'+
   '<div class="review-pagination"><button id="review-previous" type="button">← Предыдущая</button><span class="review-break">GitHub попросит подтвердить готовую заявку</span><button id="review-next" type="button">Следующая →</button></div>';
  card.appendChild(outer);
@@ -92,7 +103,7 @@ function render(){
  comment.addEventListener('input',update);
  update();
  function act(type){
-  if(type==='defer'){setState(item,{...getState(item),deferred:true});status.textContent='Карточка отложена локально. В GitHub она всё ещё ожидает решения.';render();return;}
+  if(type==='defer'){setState(item,{...getState(item),deferred:true});selected=Math.min(selected,Math.max(0,remaining().length-1));render();status.textContent='Пропущена на потом. В GitHub PR не изменился. Вернуть можно кнопкой «Вернуть отложенные».';return;}
   if(type==='approve'){
    if(approve.disabled){showMessage('Отметь три обязательные проверки.');return;}
    openReal(item,decisionUrl(item,'APPROVE',comment.value.trim()),
@@ -110,7 +121,7 @@ function render(){
  card.querySelector('#review-previous').disabled=selected===0;
  card.querySelector('#review-previous').onclick=()=>{selected=Math.max(0,selected-1);render()};
  card.querySelector('#review-next').disabled=selected===available.length-1;
- card.querySelector('#review-next').onclick=()=>{selected=Math.min(available.length-1,selected+1);render()};
+ card.querySelector('#review-next').onclick=()=>{selected=Math.min(available.length-1,selected+1);render()}; // Просто перелистывает, не откладывая
  card.onpointerdown=e=>{if(e.target.closest('button,a,input,textarea,label'))return;touched=e.clientX};
  card.onpointerup=e=>{if(touched===null)return;const delta=e.clientX-touched;touched=null;if(Math.abs(delta)>115)act(delta>0?'approve':'reject')};
  status.textContent='Реальные предложения PR из публичных репозиториев. '+(selected+1)+' из '+available.length;
