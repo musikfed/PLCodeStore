@@ -18,18 +18,18 @@
 <p>Реальные предложения <code>vitrine/</code> в публичных проектах. Проверь экран, описание и версию; затем выбери решение. GitHub откроет готовую заявку — тебе останется подтвердить её создание. Закрытые PR остаются в закрытых репозиториях.</p></div>
 <div class="review-total"><span id="review-available">0</span><small>ожидают<br>рассмотрения</small></div></div>
 <div class="review-guide"><span><b>❤️ Вправо</b> — одобрить через подтверждение GitHub</span>
-<span><b>🛑 Влево</b> — вернуть на доработку; комментарий необязателен</span><span><b>◷ Позже</b> — отложить в этом браузере</span></div>
+<span><b>🛑 Влево</b> — вернуть на доработку; комментарий необязателен</span><span><b>⏭ Пропустить на потом</b> — убрать карточку из очереди в этом браузере</span></div>
 <div class="review-status" id="review-status" role="status">Загрузка публичной очереди…</div>
 <section class="real-review" id="review-workspace" hidden>
 <div class="review-work-card" id="review-work-card" aria-live="polite"></div>
-<div class="review-toolbar"><button type="button" id="review-unhide">Показать отложенные</button><button type="button" id="review-refresh">Обновить список</button></div>
 </section>
 <section class="review-empty" id="review-empty" hidden>
-<div class="review-empty-icon">✓</div><h2>Очередь на сегодня пуста.</h2>
-<p>Когда обнаружение GitHub Actions создаст предложения с папками <code>vitrine/</code>, карточки появятся здесь после сборки Pages. Действия подтверждаются кнопкой Submit new issue в GitHub; Actions сам изменяет нужный PR.</p>
+<div class="review-empty-icon">✓</div><h2 id="review-empty-title">Очередь на сегодня пуста</h2>
+<p id="review-empty-description">После Discover и сборки Pages здесь появятся карточки для проверки.</p>
 <div class="hero-actions"><a class="btn btn-primary" href="https://github.com/musikfed/PLCodeStore/actions/workflows/discover.yml" target="_blank" rel="noopener noreferrer">Запустить обнаружение ↗</a>
 <a class="btn btn-secondary" href="https://github.com/pulls" target="_blank" rel="noopener noreferrer">Мои Pull Requests ↗</a></div></section>
-<div class="review-disclaimer"><strong>Безопасное разделение:</strong> эта страница статическая и не хранит GitHub-токен. Три галочки и «Позже» сохраняются лишь в браузере. ❤️ и 🛑 создают заранее заполненную заявку в GitHub: после твоего подтверждения Actions меняет <code>publication</code>, объединяет PR или оставляет замечания. Для закрытых проектов отдельно требуется <code>public_private_approved: true</code>.</div>
+<div class="review-toolbar"><button type="button" id="review-unhide">Нет отложенных</button><button type="button" id="review-refresh">Обновить список</button></div>
+<div class="review-disclaimer"><strong>Безопасное разделение:</strong> эта страница статическая и не хранит GitHub-токен. Три галочки и «Пропустить на потом» сохраняются лишь в браузере. «Следующая» просто перелистывает карточки; пропущенные можно вернуть. ❤️ и 🛑 создают заранее заполненную заявку в GitHub: после твоего подтверждения Actions меняет <code>publication</code>, объединяет PR или оставляет замечания. Для закрытых проектов отдельно требуется <code>public_private_approved: true</code>.</div>
 </main>
 <footer class="footer"><div class="container footer-inner"><a href="../">← К PL Code Store</a><small>Маркетинг — это папка. Публикация — это решение автора.</small></div></footer>
 </body></html>
