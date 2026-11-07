@@ -103,7 +103,7 @@ function render(){
  comment.addEventListener('input',update);
  update();
  function act(type){
-  if(type==='defer'){setState(item,{...getState(item),deferred:true});selected=Math.min(selected,Math.max(0,remaining().length-1));render();showMessage('Пропущена на потом. В GitHub PR не изменился. Вернуть можно кнопкой «Вернуть отложенные».');return;}
+  if(type==='defer'){setState(item,{...getState(item),deferred:true});selected=Math.min(selected,Math.max(0,remaining().length-1));render();status.textContent='Пропущена на потом. В GitHub PR не изменился. Вернуть можно кнопкой «Вернуть отложенные».';return;}
   if(type==='approve'){
    if(approve.disabled){showMessage('Отметь три обязательные проверки.');return;}
    openReal(item,decisionUrl(item,'APPROVE',comment.value.trim()),
