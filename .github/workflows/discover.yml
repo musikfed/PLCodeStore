@@ -39,7 +39,7 @@ jobs:
         env:
           PL_CODESTORE_TOKEN: ${{ secrets.PL_CODESTORE_TOKEN }}
           FULL_SCAN: ${{ inputs.full_scan || 'false' }}
-          PROPOSE: ${{ inputs.propose_prs != false }}
+          PROPOSE: ${{ github.event_name == 'schedule' || inputs.propose_prs }}
         run: |
           args=(--owner musikfed --max-repos 60 --max-prs 6 --budget 350
             --state .plcodestore-cache/state.json --drafts .plcodestore-cache/drafts)
