@@ -145,7 +145,7 @@ def propose(gh,owner,repo,meta):
 def scan(gh,owner,state_path,drafts,max_repos=7,max_prs=2,open_prs=False):
     repos=gh.repos(owner)
     previous=json.loads(state_path.read_text()) if state_path.exists() else {}
-    cursor=int(previous.get("cursor",0))
+    cursor=int(previous.get("cursor", (int(time.time())//86400 * max_repos) % len(repos) if repos else 0))
     changed=[];processed=0;prs=0
     drafts.mkdir(parents=True,exist_ok=True)
     for shift in range(min(len(repos),max_repos)):
