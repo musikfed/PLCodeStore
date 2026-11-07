@@ -7,6 +7,10 @@ on:
       - "templates/**"
       - "docs/assets/**"
       - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows: ["Discover and propose vitrine metadata"]
+    types: [completed]
+    branches: [main]
   schedule:
     - cron: "31 6 * * *"
   workflow_dispatch:
@@ -19,6 +23,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
